@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ESNext",
+    "module": "commonjs",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "jsx": "react-native",
+    "noEmit": true,
+    "skipLibCheck": true,
+    /* Strict Type-Checking Options */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "suppressImplicitAnyIndexErrors": true,
+    /* Additional Checks */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "experimentalDecorators": true,
+    /* Module Resolution Options */
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "paths": {
+      "*": ["src/utils/types/*.ts"],
+      "~/api": ["src/api"],
+      "~/assets/svg": ["src/assets/svg"],
+      "~/assets/images": ["src/assets/images"],
+      "~/assets/animations": ["src/assets/animations"],
+      "~/components": ["src/components"],
+      "~/scenes": ["src/scenes"],
+      "~/services": ["src/services"],
+      "~/stores": ["src/stores"],
+      "~/theme": ["src/theme"],
+      "~/navigation": ["src/navigation"],
+      "~/utils": ["src/utils"],
+      "~/utils/types": ["src/utils/types"]
+    }
+  },
+  "types": ["src/utils/types/*"],
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "__tests__/" // exclude test files
+  ]
+}

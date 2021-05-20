@@ -1,0 +1,29 @@
+name: Submit to Play Store - Internal
+
+on:
+  pull_request:
+    branches:
+      - homolog
+
+jobs:
+  release-android:
+    name: Build and release Android app
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.x'
+      - name: Install Ubuntu dependencies
+        run: sudo apt install libcurl4-openssl-dev
+      - name: Install Fastlane
+        run: bundle install
+      - name: Install packages
+        run: npm install
+      - name: Build and Upload to Internal Play Store
+        run: bundle exec fastlane android hml

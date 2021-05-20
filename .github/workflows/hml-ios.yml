@@ -1,0 +1,33 @@
+name: Submit to TestFlight
+
+on:
+  pull_request:
+    branches:
+      - homolog
+
+jobs:
+  release-ios:
+    name: Build and release iOS app
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - name: Install Fastlane
+        run: bundle install
+      - name: Install packages
+        run: npm install
+      - name: Install Pods
+        run: npx pod-install --repo-update
+      - name: Login Github User
+        run: echo -e "machine github.com\n  login $DEVOPS_LOGIN_TOKEN" >> ~/.netrc
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.DEVOPS_LOGIN_TOKEN }}
+      - name: Build and Upload to TestFlight
+        run: bundle exec fastlane ios hml
+        env:
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}

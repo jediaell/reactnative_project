@@ -1,0 +1,34 @@
+name: Run Detox to Check if the App is opening on iOS
+
+on:
+  pull_request:
+    branches:
+      - homolog
+
+jobs:
+  checking:
+    name: Code Check
+    runs-on: self_hosted
+    steps:
+      - name: Checkout Repo
+        uses: artemnovichkov/action-homebrew@master
+        uses: actions/checkout@master
+      - name: Install Dependencies
+        run: yarn install
+      # Brew Steps
+      - name: Make a Tap on Wix Brew
+        run: brew tap wix/brew
+      - name: Install Apple Simulator Utils
+        run: brew install applesimutils
+      # NVM Needed for Detox
+      - run: curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh | bash
+      - run: export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+      - run: nvm install $NODE_VERSION
+      - run: nvm use $NODE_VERSION
+      - run: nvm alias default $NODE_VERSION
+      # Global Installs at Yarn
+      - name: Install Global Deps
+        run: yarn global add detox-cli && yarn global add react-native-cli
+      # Runs detox scripts
+      - name: Run Detox on iOS
+        run: yarn detox:ios

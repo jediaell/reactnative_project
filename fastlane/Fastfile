@@ -1,0 +1,168 @@
+# Context Definitions
+package_name = 'br.com.builders.template.rn'
+build_number = number_of_commits(all: true)
+slack_url = 'https://hooks.slack.com/services/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'
+
+### IOS
+
+platform :ios do
+  desc 'Push a new release build to App Store'
+  # iOS Definitions
+  default_platform(:ios)
+  xcodeproj = './ios/template.xcodeproj'
+  workspace = './ios/template.xcworkspace'
+
+
+  lane :prd do |options|
+    # Lane Definitions
+    scheme = 'PRD'
+    # slack(message: "Iniciando deploy iOS [PRD]! 🍏😱", slack_url: slack_url)
+
+    # Params
+    release_notes =  options[:changeLog]
+
+    # Building
+    build_app(
+      include_symbols: true,
+      silent: true,
+      clean: true,
+      workspace: workspace,
+      scheme: scheme,
+      include_bitcode: true,
+      export_method: 'app-store'
+    )
+
+    # Distributing
+    upload_to_app_store(
+      build_number: (build_number).to_s,
+      release_notes: release_notes,
+      submit_for_review: false, # Se 'true' to completely automate process
+      automatic_release: true,
+      force: true, # Skip HTMl report verification
+      skip_metadata: true,
+      skip_screenshots: true,
+    )
+    # slack(message: "Deploy realizado para a loja e tudo! 🍏😱🚀", slack_url: slack_url)
+
+  end
+
+
+
+  desc 'Push a new beta build to TestFlight'
+  lane :hml do |options|
+    # HML Definitions
+    scheme = 'HML'
+    # slack(message: "Iniciando deploy iOS [HML]! 🍏", slack_url: slack_url)
+
+    # Building
+    cocoapods(podfile: "./ios/Podfile")
+    clear_derived_data
+    sync_code_signing(type: "appstore")
+    build_app(
+      clean: true,
+      workspace: workspace,
+      scheme: scheme,
+      include_bitcode: true,
+      export_method: 'app-store'
+    )
+
+    # Distributing
+    upload_to_testflight(
+      skip_submission: true,
+      skip_waiting_for_build_processing: true
+    )
+    # slack(message: "Deploy sucesso. Bora testar! HML! 🍏🚀", slack_url: slack_url)
+  end
+end
+
+
+### ANDROID
+
+
+platform :android do
+  desc 'Push a new beta build to TestFlight'
+  lane :prd do |options|
+    # Definitions
+    json_key = './fastlane/google-key.json'
+    # slack(message: "Iniciando build Android [PRD]! 🚀🤖", slack_url: slack_url)
+
+    # Versioning
+    version_name = options[:versionName]
+
+    # Bundle the app
+    gradle(
+      task: 'bundle',
+      build_type: 'Release',
+      project_dir: 'android/',
+      properties: {
+        'versionName' => version_name,
+        'versionCode' => build_number,
+      },
+      system_properties: {
+        "ENVFILE": ".env.prd"
+      }
+    )
+
+    # Upload to Play Store
+    upload_to_play_store(
+      json_key: json_key,
+      version_code: build_number, # Integer
+      version_name: version_name, # String
+      package_name: package_name,
+      track: 'internal',
+      skip_upload_apk: true,
+      release_status: 'completed',
+      aab: './android/app/build/outputs/bundle/release/app-release.aab',
+    )
+    # slack(message: "Deploy. Pra Play Store e tudo!! 🤖🚀", slack_url: slack_url)
+  end
+
+
+  lane :hml do |options|
+    # Definitions
+    json_key = './fastlane/google-key.json'
+    # slack(message: "Iniciando build Android HML! 🤖", slack_url: slack_url)
+
+    # Versioning
+    version_name = options[:versionName] # versionName from Github Actions
+
+
+    # Bundle
+    gradle(
+      task: 'clean assemble',
+      build_type: 'ReleaseStaging',
+      project_dir: 'android/',
+      properties: {
+        'versionCode' => build_number,
+      },
+      system_properties: {
+        "ENVFILE": ".env.hml"
+      }
+    )
+
+    # Firebase Distribution
+    firebase_app_distribution(
+      app: "1:813126871598:android:23bc2cae23810fa12b8dbf", # mobilesdk_app_id from Firebase
+      firebase_cli_token: options[:FIREBASE_TOKEN],
+      groups: "builders"
+    )
+    # slack(message: "Distribuído no Firebase! Bora testar!! 🤖🔥", slack_url: slack_url)
+  end
+end
+
+error do |lane, exception, options|
+       slack(
+       message: "Deu ruim 💥",
+       success: false,
+       slack_url: slack_url,
+       attachment_properties: {
+           fields: [
+               {
+                   title: "Error message",
+                   value: exception.to_s,
+                   short: false
+               }
+           ]
+       }
+   )
+  end
